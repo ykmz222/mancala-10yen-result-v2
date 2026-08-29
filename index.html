@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>マンカラ 10円しょうぶ</title>
+<meta name="theme-color" content="#1B2621">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231B2621'/><circle cx='16' cy='16' r='7' fill='%23C9884A'/></svg>">
+<style>
+  :root{
+    --board:#1B2621; --board-2:#243229; --pit:#16201B; --pit-edge:#33453A;
+    --bone:#F1EDE1; --dim:#93A79A; --copper:#C9884A; --minus:#D2687A;
+    --p1:#EFB944; --p2:#E86A8A; --p3:#58A6E0; --p4:#4FB39A; --p5:#A98BE0;
+    --round:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN","Yu Gothic Medium","游ゴシック Medium",Meiryo,system-ui,sans-serif;
+    --body:"Hiragino Sans","ヒラギノ角ゴシック","Yu Gothic",Meiryo,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:var(--body);color:var(--bone);
+    background:radial-gradient(120% 60% at 50% -10%, #2C3B31 0%, rgba(0,0,0,0) 60%), var(--board);
+    min-height:100vh;-webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:18px 14px 48px}
+
+  .masthead{text-align:center;padding:6px 0 18px}
+  .masthead svg{display:block;margin:0 auto 12px;opacity:.85}
+  h1{font-family:var(--round);font-size:26px;font-weight:800;letter-spacing:.02em;margin:0 0 6px}
+  .sub{margin:0;font-size:13px;color:var(--dim);letter-spacing:.04em}
+
+  .board{
+    background:linear-gradient(180deg,var(--board-2),#1D2822);
+    border:1px solid #3A4E41;border-radius:22px;padding:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+    margin-bottom:20px;
+  }
+  .pit{
+    display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;
+    background:var(--pit);border-radius:16px;padding:11px 14px;margin-bottom:8px;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.04);
+    transition:box-shadow .3s ease;
+  }
+  .pit:last-child{margin-bottom:0}
+  .pit.flash{box-shadow:inset 0 2px 6px rgba(0,0,0,.55), 0 0 0 2px var(--copper)}
+  .stone{width:16px;height:16px;border-radius:50%;
+    box-shadow:inset 0 -2px 3px rgba(0,0,0,.35), inset 0 2px 3px rgba(255,255,255,.5)}
+  .who .name{font-family:var(--round);font-size:17px;font-weight:700;line-height:1.2}
+  .who .wl{font-size:11px;color:var(--dim);letter-spacing:.06em}
+  .right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .coins{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end;max-width:130px}
+  .coin{width:11px;height:11px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #E5A868, var(--copper) 60%, #8E5F2E)}
+  .coin.owed{background:none;border:1.5px dashed var(--minus);opacity:.75}
+  .amount{font-family:var(--round);font-size:21px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .amount small{font-size:12px;font-weight:700;margin-left:1px}
+  .plus{color:var(--copper)} .minus{color:var(--minus)} .zero{color:var(--dim)}
+
+  .bankline{display:flex;justify-content:space-between;align-items:baseline;
+    margin:12px 6px 2px;font-size:11px;color:var(--dim);letter-spacing:.04em}
+  .bankline b{font-family:var(--round);font-size:14px;color:var(--copper);font-weight:800;
+    font-variant-numeric:tabular-nums}
+
+  .card{background:rgba(255,255,255,.035);border:1px solid #34473C;border-radius:18px;padding:16px 14px;margin-bottom:16px}
+  h2{font-family:var(--round);font-size:14px;font-weight:700;letter-spacing:.12em;color:var(--dim);margin:0 0 14px}
+  .pickrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .rolelabel{font-family:var(--round);font-size:12px;font-weight:700;width:52px;flex:none;color:var(--dim)}
+  .beads{display:flex;gap:6px;flex:1}
+  .bead{
+    flex:1;appearance:none;-webkit-appearance:none;border:1.5px solid transparent;
+    background:var(--pit);color:var(--bone);font-family:var(--round);font-weight:700;font-size:13px;
+    padding:11px 0;border-radius:13px;cursor:pointer;
+    transition:transform .12s ease, background .15s ease, border-color .15s ease, opacity .15s;
+  }
+  .bead:active{transform:scale(.94)}
+  .bead[aria-pressed="true"]{background:var(--c);color:#151E19;border-color:#fff3}
+  .bead:disabled{opacity:.28;cursor:default}
+  .bead:focus-visible{outline:2px solid var(--bone);outline-offset:2px}
+
+  .dateline{display:flex;align-items:center;gap:10px;margin:14px 0 12px}
+  input[type=date]{
+    flex:1;background:var(--pit);border:1px solid #3E5347;color:var(--bone);
+    font-family:var(--body);font-size:14px;padding:9px 11px;border-radius:11px;
+  }
+  .today-btn{background:none;border:1px solid #3E5347;color:var(--dim);font-size:11px;
+    padding:8px 10px;border-radius:10px;cursor:pointer}
+
+  #recordBtn{
+    width:100%;margin-top:2px;font-family:var(--round);font-size:16px;font-weight:800;letter-spacing:.04em;
+    padding:15px;border:none;border-radius:14px;cursor:pointer;color:#20150A;
+    background:linear-gradient(180deg,#E0A05E,var(--copper));box-shadow:0 4px 0 #86592C;
+    transition:transform .1s ease, box-shadow .1s ease, opacity .15s;
+  }
+  #recordBtn:active{transform:translateY(3px);box-shadow:0 1px 0 #86592C}
+  #recordBtn:disabled{opacity:.35;cursor:default;transform:none}
+
+  .daygroup{margin-bottom:16px}
+  .daygroup:last-child{margin-bottom:0}
+  .dayhead{
+    display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid #3E5347;padding-bottom:6px;margin-bottom:4px;
+  }
+  .daydate{font-family:var(--round);font-size:14px;font-weight:800;letter-spacing:.03em}
+  .daymeta{font-size:11px;color:var(--dim)}
+  .hlist{list-style:none;margin:0;padding:0}
+  .hitem{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;
+    padding:9px 2px;border-bottom:1px dashed #2C3B32}
+  .hitem:last-child{border-bottom:none}
+  .when{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;width:38px}
+  .match{font-family:var(--round);font-size:14px;font-weight:700}
+  .match .w{color:var(--copper)} .match .arrow{color:var(--dim);margin:0 5px;font-weight:400} .match .l{color:var(--dim)}
+  .undo{background:none;border:1px solid #3E5347;color:var(--dim);font-size:11px;
+    font-family:var(--body);padding:5px 9px;border-radius:9px;cursor:pointer}
+  .undo:active{background:#ffffff12}
+  .empty{color:var(--dim);font-size:13px;line-height:1.7;margin:0}
+  #moreBtn{width:100%;margin-top:12px;background:none;border:1px solid #3E5347;color:var(--dim);
+    font-family:var(--round);font-size:13px;padding:11px;border-radius:12px;cursor:pointer}
+
+  details summary{font-family:var(--round);font-size:14px;font-weight:700;letter-spacing:.1em;
+    color:var(--dim);cursor:pointer;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:" ＋";font-size:12px}
+  details[open] summary::after{content:" −"}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px}
+  th,td{padding:7px 2px;text-align:center;font-variant-numeric:tabular-nums}
+  thead th{color:var(--dim);font-weight:600;font-size:11px}
+  tbody th{font-family:var(--round);text-align:left;font-weight:700;font-size:12px}
+  td.self{color:#3E5347} td.win{color:var(--copper)} td.lose{color:var(--minus)} td.even{color:var(--dim)}
+  .legend{font-size:11px;color:var(--dim);margin:10px 0 0;line-height:1.6}
+
+  .tools{display:flex;gap:8px;flex-wrap:wrap}
+  .tool{flex:1;min-width:calc(50% - 4px);background:var(--pit);border:1px solid #3E5347;color:var(--bone);
+    font-family:var(--round);font-size:13px;font-weight:700;padding:12px 8px;border-radius:12px;cursor:pointer}
+  .tool:active{background:#ffffff12}
+  footer{text-align:center;padding-top:6px}
+  #resetBtn{background:none;border:none;color:#5F7267;font-size:12px;text-decoration:underline;cursor:pointer;padding:8px}
+  .note{font-size:11px;color:#5F7267;margin:4px 0 0;line-height:1.6}
+
+  .fly{position:fixed;width:20px;height:20px;border-radius:50%;z-index:50;
+    background:radial-gradient(circle at 35% 30%, #F0BE84, var(--copper) 60%, #8E5F2E);
+    box-shadow:0 3px 10px rgba(0,0,0,.5);pointer-events:none}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+    background:#0F1714;border:1px solid #3E5347;color:var(--bone);font-size:13px;
+    padding:10px 18px;border-radius:99px;z-index:60;opacity:0;transition:opacity .25s ease;pointer-events:none}
+  .toast.on{opacity:1}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.fly{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <svg width="152" height="46" viewBox="0 0 152 46" aria-hidden="true">
+      <rect x="1" y="1" width="150" height="44" rx="22" fill="none" stroke="#3E5347" stroke-width="1.5"/>
+      <ellipse cx="18" cy="23" rx="9" ry="13" fill="#16201B"/>
+      <ellipse cx="134" cy="23" rx="9" ry="13" fill="#16201B"/>
+      <g fill="#16201B">
+        <circle cx="42" cy="14" r="7"/><circle cx="62" cy="14" r="7"/><circle cx="82" cy="14" r="7"/><circle cx="102" cy="14" r="7"/>
+        <circle cx="42" cy="32" r="7"/><circle cx="62" cy="32" r="7"/><circle cx="82" cy="32" r="7"/><circle cx="102" cy="32" r="7"/>
+      </g>
+      <circle cx="42" cy="13" r="2.5" fill="#EFB944"/><circle cx="63" cy="15" r="2.5" fill="#E86A8A"/>
+      <circle cx="81" cy="12" r="2.5" fill="#58A6E0"/><circle cx="102" cy="33" r="2.5" fill="#4FB39A"/>
+      <circle cx="61" cy="31" r="2.5" fill="#A98BE0"/>
+      <circle cx="18" cy="20" r="2.5" fill="#C9884A"/><circle cx="17" cy="27" r="2.5" fill="#C9884A"/>
+    </svg>
+    <h1>マンカラ 10円しょうぶ</h1>
+    <p class="sub">勝ったら20円もらう ／ 負けたら10円はらう</p>
+  </header>
+
+  <section class="board">
+    <div id="board"></div>
+    <p class="bankline" id="bankLine"></p>
+  </section>
+
+  <section class="card">
+    <h2>しょうぶを きろくする</h2>
+    <div class="pickrow"><span class="rolelabel">かった人</span><div class="beads" id="winnerPick"></div></div>
+    <div class="pickrow"><span class="rolelabel">まけた人</span><div class="beads" id="loserPick"></div></div>
+    <div class="dateline">
+      <span class="rolelabel">日づけ</span>
+      <input type="date" id="dateInput">
+      <button class="today-btn" id="todayBtn">今日</button>
+    </div>
+    <button id="recordBtn" disabled>きろくする（+20 ／ −10）</button>
+  </section>
+
+  <section class="card">
+    <h2>きろく <span id="count" style="letter-spacing:0"></span></h2>
+    <div id="historyBox"></div>
+    <button id="moreBtn" hidden>もっと前を見る</button>
+  </section>
+
+  <details class="card">
+    <summary>対戦表</summary>
+    <div id="matrix"></div>
+  </details>
+
+  <section class="card">
+    <h2>データ</h2>
+    <div class="tools">
+      <button class="tool" id="csvBtn">CSVで書き出す</button>
+      <button class="tool" id="backupBtn">バックアップ保存</button>
+      <button class="tool" id="restoreBtn">バックアップ読み込み</button>
+      <button class="tool" id="shareBtn">このページを共有</button>
+    </div>
+    <input type="file" id="fileInput" accept="application/json,.json" hidden>
+    <p class="legend">きろくは この端末のブラウザの中だけに保存されます。機種変更や別の端末に移すときは、バックアップを使ってください。</p>
+  </section>
+
+  <footer>
+    <button id="resetBtn">きろくを ぜんぶ消す</button>
+    <p class="note" id="storageNote"></p>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const PLAYERS = [
+    {name:"はく", color:"var(--p1)"},
+    {name:"のあ", color:"var(--p2)"},
+    {name:"りく", color:"var(--p3)"},
+    {name:"ママ", color:"var(--p4)"},
+    {name:"パパ", color:"var(--p5)"}
+  ];
+  const KEY = "mancala10yen.v1";
+  const WIN = 20;    // 勝った人がもらう
+  const LOSE = 10;   // 負けた人がはらう
+  const COIN = 10;   // 10円玉ひとつ
+  const WEEK = ["日","月","火","水","木","金","土"];
+
+  let matches = [];
+  let pick = {winner:null, loser:null};
+  let dayLimit = 5;
+  let storageOK = true;
+
+  const $ = id => document.getElementById(id);
+  const board = $("board");
+
+  /* ---------- 保存（この端末のブラウザ内） ---------- */
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      matches = raw ? JSON.parse(raw) : [];
+      if(!Array.isArray(matches)) matches = [];
+    }catch(e){ matches = []; storageOK = false; }
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(matches)); storageOK = true; }
+    catch(e){ storageOK = false; }
+    renderNote();
+  }
+  function renderNote(){
+    $("storageNote").textContent = storageOK
+      ? "きろくは この端末に保存されています。"
+      : "⚠ 保存できません。プライベートブラウズを解除してください。";
+  }
+
+  /* ---------- 日付 ---------- */
+  const pad = n => String(n).padStart(2,"0");
+  function dayKey(ts){ const d = new Date(ts); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function dayLabel(key){
+    const [y,m,dd] = key.split("-").map(Number);
+    const d = new Date(y, m-1, dd);
+    const today = dayKey(Date.now());
+    const yst = dayKey(Date.now() - 86400000);
+    const base = m+"月"+dd+"日（"+WEEK[d.getDay()]+"）";
+    if(key === today) return base + " 今日";
+    if(key === yst)   return base + " きのう";
+    return (y !== new Date().getFullYear() ? y+"年 " : "") + base;
+  }
+  function timeLabel(ts){ const d = new Date(ts); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+
+  /* ---------- 集計 ---------- */
+  function stats(list){
+    const s = {};
+    PLAYERS.forEach(p => s[p.name] = {win:0, lose:0, yen:0});
+    list.forEach(m => {
+      if(s[m.winner]){ s[m.winner].win++; s[m.winner].yen += WIN; }
+      if(s[m.loser]){  s[m.loser].lose++; s[m.loser].yen -= LOSE; }
+    });
+    return s;
+  }
+
+  function renderBoard(){
+    const s = stats(matches);
+    board.innerHTML = "";
+    PLAYERS.forEach(p => {
+      const d = s[p.name];
+      const n = Math.abs(d.yen)/COIN, shown = Math.min(n,10);
+      const cls = d.yen>0 ? "plus" : d.yen<0 ? "minus" : "zero";
+      const sign = d.yen>0 ? "+" : d.yen<0 ? "−" : "±";
+      const pit = document.createElement("div");
+      pit.className = "pit"; pit.dataset.player = p.name;
+      pit.innerHTML =
+        '<span class="stone" style="background:'+p.color+'"></span>' +
+        '<span class="who"><span class="name">'+p.name+'</span><br>' +
+          '<span class="wl">'+d.win+'勝 '+d.lose+'敗</span></span>' +
+        '<span class="right"><span class="coins">' +
+          Array.from({length:shown}, () => '<span class="coin'+(d.yen<0?" owed":"")+'"></span>').join("") +
+          (n>10 ? '<span class="wl" style="margin-left:3px">＋'+(n-10)+'</span>' : "") +
+        '</span><span class="amount '+cls+'">'+sign+Math.abs(d.yen)+'<small>円</small></span></span>';
+      board.appendChild(pit);
+    });
+    const bank = matches.length * (WIN - LOSE);
+    $("bankLine").innerHTML = '<span>パパの立てかえ（1しょうぶ ' + (WIN-LOSE) + '円）</span><b>' + bank + '円</b>';
+  }
+
+  function renderPickers(){
+    ["winner","loser"].forEach(role => {
+      const box = $(role+"Pick"); box.innerHTML = "";
+      PLAYERS.forEach(p => {
+        const b = document.createElement("button");
+        b.className = "bead"; b.type = "button"; b.textContent = p.name;
+        b.style.setProperty("--c", p.color);
+        b.setAttribute("aria-pressed", pick[role] === p.name);
+        b.disabled = (role === "winner" ? pick.loser : pick.winner) === p.name;
+        b.onclick = () => { pick[role] = pick[role] === p.name ? null : p.name; renderPickers(); };
+        box.appendChild(b);
+      });
+    });
+    $("recordBtn").disabled = !(pick.winner && pick.loser);
+  }
+
+  /* ---------- 履歴（日づけごと） ---------- */
+  function renderHistory(){
+    const box = $("historyBox");
+    $("count").textContent = matches.length ? "（ぜんぶで "+matches.length+"しょうぶ）" : "";
+    box.innerHTML = "";
+    if(!matches.length){
+      box.innerHTML = '<p class="empty">まだ記録がありません。<br>「かった人」と「まけた人」をえらんで、10円をうごかしてください。</p>';
+      $("moreBtn").hidden = true;
+      return;
+    }
+    const groups = {};
+    matches.forEach(m => { (groups[dayKey(m.ts)] = groups[dayKey(m.ts)] || []).push(m); });
+    const keys = Object.keys(groups).sort().reverse();
+
+    keys.slice(0, dayLimit).forEach(k => {
+      const list = groups[k].slice().sort((a,b) => b.ts - a.ts);
+      const s = stats(list);
+      const winners = PLAYERS.map(p => ({n:p.name, y:s[p.name].yen}))
+        .filter(x => x.y !== 0)
+        .sort((a,b) => b.y - a.y)
+        .map(x => x.n + (x.y>0 ? " +" : " −") + Math.abs(x.y))
+        .join(" ／ ");
+
+      const g = document.createElement("div");
+      g.className = "daygroup";
+      g.innerHTML = '<div class="dayhead"><span class="daydate">'+dayLabel(k)+'</span>' +
+                    '<span class="daymeta">'+list.length+'しょうぶ</span></div>' +
+                    (winners ? '<p class="daymeta" style="margin:0 0 4px">'+winners+'</p>' : "");
+      const ul = document.createElement("ul"); ul.className = "hlist";
+      list.forEach(m => {
+        const li = document.createElement("li"); li.className = "hitem";
+        li.innerHTML = '<span class="when">'+timeLabel(m.ts)+'</span>' +
+          '<span class="match"><span class="w">'+m.winner+'</span>' +
+          '<span class="arrow">かち ▸ まけ</span><span class="l">'+m.loser+'</span></span>';
+        const btn = document.createElement("button");
+        btn.className = "undo"; btn.textContent = "取り消す";
+        btn.onclick = () => {
+          if(!confirm(m.winner+" の勝ちを取り消しますか？")) return;
+          matches = matches.filter(x => x.id !== m.id);
+          save(); renderAll(); toast("1しょうぶを 取り消しました");
+        };
+        li.appendChild(btn); ul.appendChild(li);
+      });
+      g.appendChild(ul); box.appendChild(g);
+    });
+
+    $("moreBtn").hidden = keys.length <= dayLimit;
+  }
+  $("moreBtn").onclick = () => { dayLimit += 10; renderHistory(); };
+
+  /* ---------- 対戦表 ---------- */
+  function renderMatrix(){
+    const mx = $("matrix");
+    if(!matches.length){ mx.innerHTML = '<p class="legend" style="margin-top:14px">対戦するとここに成績が出ます。</p>'; return; }
+    const t = {};
+    PLAYERS.forEach(a => { t[a.name] = {}; PLAYERS.forEach(b => t[a.name][b.name] = [0,0]); });
+    matches.forEach(m => { if(t[m.winner] && t[m.winner][m.loser]){ t[m.winner][m.loser][0]++; t[m.loser][m.winner][1]++; } });
+    let html = '<table><thead><tr><th></th>';
+    PLAYERS.forEach(p => html += '<th>'+p.name+'</th>');
+    html += '</tr></thead><tbody>';
+    PLAYERS.forEach(a => {
+      html += '<tr><th>'+a.name+'</th>';
+      PLAYERS.forEach(b => {
+        if(a.name === b.name){ html += '<td class="self">—</td>'; return; }
+        const [w,l] = t[a.name][b.name];
+        html += '<td class="'+(w>l?"win":w<l?"lose":"even")+'">'+w+'-'+l+'</td>';
+      });
+      html += '</tr>';
+    });
+    mx.innerHTML = html + '</tbody></table><p class="legend">よこの人から見た「勝-敗」です。</p>';
+  }
+
+  function renderAll(){ renderBoard(); renderPickers(); renderHistory(); renderMatrix(); }
+
+  /* ---------- 演出 ---------- */
+  function flyCoin(from, to){
+    const a = board.querySelector('[data-player="'+from+'"]'), b = board.querySelector('[data-player="'+to+'"]');
+    if(!a || !b) return;
+    b.classList.add("flash"); setTimeout(() => b.classList.remove("flash"), 800);
+    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    const c = document.createElement("div"); c.className = "fly";
+    c.style.left = (ra.right-40)+"px"; c.style.top = (ra.top+ra.height/2-10)+"px";
+    document.body.appendChild(c);
+    c.animate([
+      {transform:"translate(0,0) scale(1)"},
+      {transform:"translate(-40px,"+((rb.top-ra.top)/2)+"px) scale(1.4)", offset:.5},
+      {transform:"translate(0,"+(rb.top-ra.top)+"px) scale(1)"}
+    ], {duration:620, easing:"cubic-bezier(.4,0,.2,1)"}).onfinish = () => c.remove();
+  }
+  let toastTimer;
+  function toast(msg){
+    const el = $("toast"); el.textContent = msg; el.classList.add("on");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("on"), 1900);
+  }
+
+  /* ---------- 記録 ---------- */
+  function todayStr(){ const d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  $("dateInput").value = todayStr();
+  $("todayBtn").onclick = () => { $("dateInput").value = todayStr(); };
+
+  $("recordBtn").onclick = () => {
+    if(!pick.winner || !pick.loser || pick.winner === pick.loser) return;
+    const w = pick.winner, l = pick.loser;
+    const v = $("dateInput").value || todayStr();
+    let ts;
+    if(v === todayStr()){ ts = Date.now(); }
+    else{
+      const [y,mo,dd] = v.split("-").map(Number);
+      ts = new Date(y, mo-1, dd, 12, 0, 0).getTime();
+    }
+    matches.push({id: Date.now()+"-"+Math.random().toString(36).slice(2,7), winner:w, loser:l, ts:ts});
+    matches.sort((a,b) => a.ts - b.ts);
+    pick = {winner:null, loser:null};
+    save(); renderAll(); flyCoin(l, w);
+    toast(w + " +" + WIN + "円 ／ " + l + " −" + LOSE + "円");
+  };
+
+  /* ---------- データ ---------- */
+  function download(name, text, type){
+    const blob = new Blob([text], {type:type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  $("csvBtn").onclick = () => {
+    if(!matches.length){ toast("記録がありません"); return; }
+    const rows = [["日づけ","曜日","時刻","かった人","まけた人","勝ちの金額","負けの金額","立てかえ"]];
+    matches.slice().sort((a,b) => a.ts-b.ts).forEach(m => {
+      const d = new Date(m.ts);
+      rows.push([dayKey(m.ts), WEEK[d.getDay()], timeLabel(m.ts), m.winner, m.loser, WIN, -LOSE, WIN-LOSE]);
+    });
+    const csv = "\uFEFF" + rows.map(r => r.join(",")).join("\r\n");
+    download("mancala_"+todayStr().replace(/-/g,"")+".csv", csv, "text/csv;charset=utf-8");
+    toast("CSVを書き出しました");
+  };
+  $("backupBtn").onclick = () => {
+    download("mancala_backup_"+todayStr().replace(/-/g,"")+".json", JSON.stringify(matches), "application/json");
+    toast("バックアップを保存しました");
+  };
+  $("restoreBtn").onclick = () => $("fileInput").click();
+  $("fileInput").onchange = e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const data = JSON.parse(r.result);
+        if(!Array.isArray(data)) throw new Error();
+        if(!confirm("いまの記録に "+data.length+"しょうぶ を足しますか？（同じ記録は重複しません）")) return;
+        const ids = new Set(matches.map(m => m.id));
+        data.forEach(m => { if(m && m.id && m.winner && m.loser && m.ts && !ids.has(m.id)) matches.push(m); });
+        matches.sort((a,b) => a.ts - b.ts);
+        save(); renderAll(); toast("読み込みました");
+      }catch(err){ alert("このファイルは読み込めませんでした。バックアップ保存で作ったファイルをえらんでください。"); }
+      e.target.value = "";
+    };
+    r.readAsText(f);
+  };
+  $("shareBtn").onclick = async () => {
+    const url = location.href;
+    try{
+      if(navigator.share){ await navigator.share({title:"マンカラ 10円しょうぶ", url:url}); }
+      else { await navigator.clipboard.writeText(url); toast("リンクをコピーしました"); }
+    }catch(err){ /* キャンセル時は何もしない */ }
+  };
+  $("resetBtn").onclick = () => {
+    if(!matches.length) return;
+    if(!confirm("ぜんぶの記録（"+matches.length+"しょうぶ）を消します。もどせません。よろしいですか？")) return;
+    matches = []; save(); renderAll(); toast("記録を消しました");
+  };
+
+  /* ---------- 起動 ---------- */
+  load(); renderAll(); renderNote();
+})();
+</script>
+</body>
+</html>
