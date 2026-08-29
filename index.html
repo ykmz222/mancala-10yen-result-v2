@@ -162,7 +162,7 @@
       <circle cx="61" cy="31" r="2.5" fill="#A98BE0"/>
       <circle cx="18" cy="20" r="2.5" fill="#C9884A"/><circle cx="17" cy="27" r="2.5" fill="#C9884A"/>
     </svg>
-    <h1>マンカラ 10円しょうぶ</h1>
+    <h1>マンカラ かったら20円・まけたら10円</h1>
     <p class="sub">勝ったら20円もらう ／ 負けたら10円はらう</p>
   </header>
 
@@ -483,7 +483,7 @@
   $("shareBtn").onclick = async () => {
     const url = location.href;
     try{
-      if(navigator.share){ await navigator.share({title:"マンカラ 10円しょうぶ", url:url}); }
+      if(navigator.share){ await navigator.share({title:"マンカラ かったら20円・まけたら10円", url:url}); }
       else { await navigator.clipboard.writeText(url); toast("リンクをコピーしました"); }
     }catch(err){ /* キャンセル時は何もしない */ }
   };
